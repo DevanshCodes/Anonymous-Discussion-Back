@@ -3,14 +3,19 @@
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
+  "proxy": "http://localhost:4000",
   "scripts": {
+    "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.17.1",
+    "mongodb": "^3.5.5",
     "mongoose": "^5.9.6",
+    "nodemon": "^2.0.2",
     "socket.io": "^2.3.0"
   }
 }

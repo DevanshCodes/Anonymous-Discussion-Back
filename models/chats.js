@@ -1,18 +1,14 @@
 const mongoose = require ('mongoose');
 const schema = mongoose.Schema;
 
-const PostSchema = new schema({
+const ChatSchema = new schema({
     username: {
         type: String,
         required: true,
     },
-    description: {
+    chat: {
         type: String,
     },
-    pinned: {
-        type: Boolean,
-        default: false,
-    }
 })
 
-module.exports = mongoose.model('post',PostSchema);
+module.exports = mongoose.model('chats',ChatSchema);

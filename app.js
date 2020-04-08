@@ -1,45 +1,64 @@
-const express = require('express')
 const path = require('path')
-const posts = require('./models/posts')
+const chats = require('./models/chats')
 const users = require('./models/users')
-var app = require('express')();
-var http = require('http').createServer(app);
-var io = require('socket.io')(http);
-const mongoose = require('mongoose')
-
-mongoose.connect('mongodb://127.0.0.1:27017/anonymous-project', {
-  useNewUrlParser: true,
-  useCreateIndex: true,
-  useUnifiedTopology: true,
-  useFindAndModify: false
-})
-const connection = mongoose.connection;
-connection.once('open', function(){
-    console.log('Connected');
-})
+const app = require('express')();
+const server = app.listen(4000);
+const io = require('socket.io')(server);
+const mongoose = require('mongoose');
+const cors = require('cors');
+app.use(cors());
 
 
-app.listen(4000, function () {
-    console.log('server is now listening on port 4000');
+mongoose.connect('mongodb://devansh:KGdhpIYEsoHSz0gr@anonymous-project-shard-00-00-e0dq9.mongodb.net:27017,anonymous-project-shard-00-01-e0dq9.mongodb.net:27017,anonymous-project-shard-00-02-e0dq9.mongodb.net:27017/test?ssl=true&replicaSet=Anonymous-Project-shard-0&authSource=admin&retryWrites=true&w=majority', {
+    useNewUrlParser: true,
+    useCreateIndex: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false
+}).then(() => {
+    console.log('MongoDB is connected')
+}).catch(err => {
+    console.log('MongoDB connection unsuccessful, retry after 5 seconds.')
+    setTimeout(connectWithRetry, 5000)
 })
+
+var db = mongoose.connection
+
+io.on('connection', function (socket) {
+    console.log("connected");
+    socket.on("newMessage", async (data) => {
+        try {
+            var chat = new chats({
+                username: data.username,
+                chat: data.chat
+            })
+            await chat.save();
+            console.log(data);
+        } catch{
+            console.log('Error')
+        }
+    })
+})
+
 
 app.get('/', function (req, res) {
     res.redirect('https://www.github.com/DevanshCodes')
 })
 
-app.get('/:username', async function (req, res) {
+app.get('/api/chats', async function (req, res) {
     try {
-        user = await users.findOne({ username: req.params.username })
-        if (user) {
-                post = posts.findOne({ username: user })
-                let description = post.description
-                res.json(description)
-        }
+        await chats.find((err, chats) => {
+            if (err) {
+                console.log(err)
+            } else {
+                res.json(chats);
+            }
+        })
     } catch (error) {
-        res.redirect('www.google.com')
+        console.log(error);
     }
-    
-app.post('/:username',async function (req,res){
+})
+
+app.post('/:username', async function (req, res) {
     let user = req.params.username;
     new_user = new users({
         username: user
@@ -48,4 +67,3 @@ app.post('/:username',async function (req,res){
     res.json(new_user)
 })
 
-})
