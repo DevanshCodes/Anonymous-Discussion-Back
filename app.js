@@ -1,4 +1,3 @@
-const path = require('path')
 const chats = require('./models/chats')
 const users = require('./models/users')
 const app = require('express')();
@@ -6,10 +5,11 @@ const server = app.listen(4000);
 const io = require('socket.io')(server);
 const mongoose = require('mongoose');
 const cors = require('cors');
+const mongoURL = 'mongodb://devansh:KGdhpIYEsoHSz0gr@anonymous-project-shard-00-00-e0dq9.mongodb.net:27017,anonymous-project-shard-00-01-e0dq9.mongodb.net:27017,anonymous-project-shard-00-02-e0dq9.mongodb.net:27017/test?ssl=true&replicaSet=Anonymous-Project-shard-0&authSource=admin&retryWrites=true&w=majority';
 app.use(cors());
 
 
-mongoose.connect('mongodb://devansh:KGdhpIYEsoHSz0gr@anonymous-project-shard-00-00-e0dq9.mongodb.net:27017,anonymous-project-shard-00-01-e0dq9.mongodb.net:27017,anonymous-project-shard-00-02-e0dq9.mongodb.net:27017/test?ssl=true&replicaSet=Anonymous-Project-shard-0&authSource=admin&retryWrites=true&w=majority', {
+mongoose.connect(mongoURL, {
     useNewUrlParser: true,
     useCreateIndex: true,
     useUnifiedTopology: true,
@@ -21,10 +21,20 @@ mongoose.connect('mongodb://devansh:KGdhpIYEsoHSz0gr@anonymous-project-shard-00-
     setTimeout(connectWithRetry, 5000)
 })
 
-var db = mongoose.connection
+var connectWithRetry = function () {
+    return mongoose.connect(mongoURL, function (err) {
+        if (err) {
+            console.error('Failed to connect to mongo on startup - retrying in 5 sec', err);
+            setTimeout(connectWithRetry, 5000);
+        }
+    });
+};
 
-io.on('connection', function (socket) {
+io.on('connection', function (socket,client) {
     console.log("connected");
+        socket.on('connect', ()=>{
+            console.log('New Client is Connected!')
+        })
     socket.on("newMessage", async (data) => {
         try {
             var chat = new chats({
@@ -33,6 +43,7 @@ io.on('connection', function (socket) {
             })
             await chat.save();
             console.log(data);
+            io.emit('newChat', data)
         } catch{
             console.log('Error')
         }
