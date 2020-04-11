@@ -1,6 +1,7 @@
 const chats = require('./models/chats')
 const app = require('express')();
-const server = app.listen(4000);
+var port_number = process.env.PORT || 3000;
+const server = app.listen(port_number);
 const io = require('socket.io')(server);
 const mongoose = require('mongoose');
 const cors = require('cors');
