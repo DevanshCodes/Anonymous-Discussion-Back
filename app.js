@@ -1,5 +1,4 @@
 const chats = require('./models/chats')
-const users = require('./models/users')
 const app = require('express')();
 const server = app.listen(4000);
 const io = require('socket.io')(server);
@@ -30,20 +29,23 @@ var connectWithRetry = function () {
     });
 };
 
-io.on('connection', function (socket,client) {
-    console.log("connected");
-        socket.on('connect', ()=>{
-            console.log('New Client is Connected!')
-        })
+io.sockets.on('connection', function (socket, client) {
+    socket.on('connect', () => {
+        console.log('New Client is Connected!')
+    })
+    socket.on('room',function(room){
+        socket.join(room);
+    })
     socket.on("newMessage", async (data) => {
         try {
             var chat = new chats({
                 username: data.username,
-                chat: data.chat
+                chat: data.chat,
+                roomno: data.roomno
             })
             await chat.save();
             console.log(data);
-            io.emit('newChat', data)
+            io.sockets.in(data.roomno).emit('newChat', data)
         } catch{
             console.log('Error')
         }
@@ -55,26 +57,16 @@ app.get('/', function (req, res) {
     res.redirect('https://www.github.com/DevanshCodes')
 })
 
-app.get('/api/chats', async function (req, res) {
+app.get('/api/chats/:roomno', async function (req, res) {
     try {
-        await chats.find((err, chats) => {
-            if (err) {
-                console.log(err)
-            } else {
-                res.json(chats);
-            }
-        })
+        const nchats = await chats.find({ roomno: req.params.roomno })
+        if (nchats) {
+            return res.json(nchats)
+          } else {
+            return res.json([{username: 'Admin', chat: `welcome to room number ${req.params.roomno}`}])
+          }
     } catch (error) {
         console.log(error);
     }
-})
-
-app.post('/:username', async function (req, res) {
-    let user = req.params.username;
-    new_user = new users({
-        username: user
-    })
-    await new_user.save();
-    res.json(new_user)
 })
 

@@ -9,6 +9,10 @@ const ChatSchema = new schema({
     chat: {
         type: String,
     },
+    roomno:{
+        type: String,
+        required: true,
+    }
 })
 
 module.exports = mongoose.model('chats',ChatSchema);
