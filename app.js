@@ -1,3 +1,4 @@
+require('dotenv').config()
 const chats = require('./models/chats')
 const app = require('express')();
 var port_number = process.env.PORT || 4000;
@@ -5,7 +6,7 @@ const server = app.listen(port_number);
 const io = require('socket.io')(server);
 const mongoose = require('mongoose');
 const cors = require('cors');
-const mongoURL = 'mongodb://devansh:KGdhpIYEsoHSz0gr@anonymous-project-shard-00-00-e0dq9.mongodb.net:27017,anonymous-project-shard-00-01-e0dq9.mongodb.net:27017,anonymous-project-shard-00-02-e0dq9.mongodb.net:27017/test?ssl=true&replicaSet=Anonymous-Project-shard-0&authSource=admin&retryWrites=true&w=majority';
+const mongoURL = `mongodb://devansh:${process.env.mongoPass}@anonymous-project-shard-00-00-e0dq9.mongodb.net:27017,anonymous-project-shard-00-01-e0dq9.mongodb.net:27017,anonymous-project-shard-00-02-e0dq9.mongodb.net:27017/test?ssl=true&replicaSet=Anonymous-Project-shard-0&authSource=admin&retryWrites=true&w=majority`;
 app.use(cors());
 
 
@@ -17,7 +18,7 @@ mongoose.connect(mongoURL, {
 }).then(() => {
     console.log('MongoDB is connected')
 }).catch(err => {
-    console.log('MongoDB connection unsuccessful, retry after 5 seconds.')
+    console.log(`MongoDB connection unsuccessful due to ${err}, retry after 5 seconds.`)
     setTimeout(connectWithRetry, 5000)
 })
 
@@ -31,12 +32,9 @@ var connectWithRetry = function () {
 };
 
 io.sockets.on('connection', function (socket, client) {
-    socket.on('connect', () => {
-        console.log('New Client is Connected!')
-    })
     socket.on('room', function (room) {
         socket.join(room);
-        console.log(`${room} joined`)
+        console.log(`Someone joined on ${room}`)
         async function chatsfun(room) {
             const nchats = await chats.find({ roomno: room })
             if (nchats) {
